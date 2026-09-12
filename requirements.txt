@@ -1,0 +1,11 @@
+alembic
+fastapi
+llama-cloud>=1.0
+openai
+minio
+psycopg[binary]
+pydantic-settings
+python-multipart
+sqlalchemy
+uvicorn[standard]
+llama_cloud==1.6.0

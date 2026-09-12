@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Past Paper Studio</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #162033;
+      --muted: #6b7890;
+      --line: #e2e8f0;
+      --brand: #3157d5;
+      --brand-dark: #203d9c;
+      --green: #12805c;
+      --orange: #b56b00;
+      --red: #c33c4b;
+      --shadow: 0 16px 42px rgba(35, 55, 90, .08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+    .sidebar {
+      padding: 28px 20px;
+      background: #172446;
+      color: #dfe7ff;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; margin-bottom: 48px; }
+    .brand-mark {
+      display: grid; place-items: center; width: 38px; height: 38px;
+      border-radius: 12px; background: #5d7dff; color: white; font-weight: 800;
+    }
+    .brand strong { display: block; color: white; font-size: 16px; }
+    .brand span { display: block; color: #aebce4; font-size: 12px; }
+    .nav-label { margin: 0 12px 10px; color: #8798c6; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; }
+    .nav-item { padding: 11px 12px; border-radius: 10px; color: #dfe7ff; }
+    .nav-item.active { background: rgba(111, 139, 255, .22); color: white; }
+    .sidebar-note {
+      position: absolute; bottom: 24px; width: 205px; padding: 14px;
+      border: 1px solid rgba(255,255,255,.12); border-radius: 12px; color: #aebce4; font-size: 12px;
+    }
+    main { min-width: 0; padding: 28px clamp(20px, 4vw, 56px); }
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 28px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 6px; font-size: clamp(25px, 3vw, 34px); letter-spacing: -.03em; }
+    h2 { margin-bottom: 4px; font-size: 18px; }
+    h3 { margin-bottom: 4px; font-size: 15px; }
+    .subtitle, .muted { color: var(--muted); }
+    .status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #25ad78; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .card { padding: 23px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); box-shadow: var(--shadow); }
+    .card.full { grid-column: 1 / -1; }
+    .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 18px; }
+    .step { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px; border-radius: 9px; background: #e9eeff; color: var(--brand); font-weight: 800; }
+    .head-copy { display: flex; gap: 11px; }
+    .head-copy p { margin-bottom: 0; color: var(--muted); font-size: 13px; }
+    form { display: grid; gap: 11px; }
+    label { color: #52617a; font-size: 12px; font-weight: 700; }
+    input[type="text"], input[type="file"] {
+      width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: #fbfcfe; color: var(--ink);
+    }
+    input:focus { outline: 3px solid #dbe3ff; border-color: var(--brand); }
+    button {
+      border: 0; border-radius: 9px; padding: 10px 14px; background: var(--brand); color: white; font-weight: 700;
+    }
+    button:hover { background: var(--brand-dark); }
+    button.secondary { background: #edf1fb; color: #29448f; }
+    button.secondary:hover { background: #dfe7fc; }
+    button:disabled { cursor: not-allowed; opacity: .5; }
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 4px; }
+    .result { margin-top: 16px; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: #fafcff; }
+    .result:empty { display: none; }
+    .badge { display: inline-flex; padding: 3px 8px; border-radius: 999px; background: #edf1fb; color: #3d527e; font-size: 11px; font-weight: 700; }
+    .badge.success { background: #e4f7ee; color: var(--green); }
+    .badge.pending { background: #fff3dc; color: var(--orange); }
+    .badge.failed { background: #fde8eb; color: var(--red); }
+    .unit-list { display: grid; gap: 8px; max-height: 250px; overflow: auto; }
+    .unit { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; }
+    .unit > span:first-child { color: var(--brand-dark); font-size: 16px; font-weight: 750; }
+    .questions { display: grid; gap: 13px; }
+    .question { padding: 17px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .question-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .question-text { margin: 0 0 12px; white-space: pre-wrap; font-weight: 650; }
+    .meta { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+    .unit-highlight { margin: -4px 0 12px; color: var(--brand-dark); font-size: 17px; font-weight: 750; }
+    .options { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+    .options li { padding: 8px 10px; border-radius: 7px; background: #f4f6fb; color: #3e4e69; }
+    .options b { margin-right: 6px; color: var(--brand); }
+    #message { min-height: 24px; margin: 18px 0 0; color: var(--muted); }
+    #message.error { color: var(--red); }
+    @media (max-width: 850px) {
+      .app { display: block; }
+      .sidebar { padding: 17px 20px; }
+      .brand { margin-bottom: 16px; }
+      .sidebar-note, .nav-label, .nav-item { display: none; }
+      .grid { grid-template-columns: 1fr; }
+      .card.full { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">P</div>
+        <div><strong>Past Paper Studio</strong><span>Learning content workspace</span></div>
+      </div>
+      <p class="nav-label">Workspace</p>
+      <div class="nav-item active">Content library</div>
+      <div class="nav-item">Question bank</div>
+      <div class="sidebar-note">Upload a book, split its table of contents into units, then classify past-paper questions.</div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <h1>Content library</h1>
+          <p class="subtitle">Turn books and past papers into a structured question bank.</p>
+        </div>
+        <div class="status"><span class="status-dot"></span> API connected</div>
+      </header>
+
+      <section class="grid">
+        <article class="card">
+          <div class="card-head">
+            <div class="head-copy"><span class="step">1</span><div><h2>Upload material</h2><p>Store a book and extract its units from the table of contents.</p></div></div>
+          </div>
+          <form id="material-form">
+            <div><label for="material-title">Material title</label><input id="material-title" name="title" placeholder="e.g. History of Jordan" required></div>
+            <div><label for="material-file">PDF book</label><input id="material-file" name="file" type="file" accept="application/pdf" required></div>
+            <div class="actions"><button type="submit">Upload material</button><button id="split-button" class="secondary" type="button" disabled>Process TOC</button></div>
+          </form>
+          <div id="material-result" class="result"></div>
+          <div id="unit-list" class="unit-list"></div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div class="head-copy"><span class="step">2</span><div><h2>Upload past paper</h2><p>Extract questions, options, types, units, and material titles.</p></div></div>
+          </div>
+          <form id="paper-form">
+            <div><label for="paper-title">Past-paper title</label><input id="paper-title" name="title" placeholder="e.g. Tawjihi 2026" required></div>
+            <div><label for="paper-file">PDF past paper</label><input id="paper-file" name="file" type="file" accept="application/pdf" required></div>
+            <div class="actions"><button type="submit">Upload past paper</button><button id="process-button" class="secondary" type="button" disabled>Process questions</button></div>
+          </form>
+          <div id="paper-result" class="result"></div>
+        </article>
+
+        <article class="card full">
+          <div class="card-head">
+            <div class="head-copy"><span class="step">3</span><div><h2>Question bank</h2><p>Review the extracted structure and classification results.</p></div></div>
+            <span id="question-count" class="badge">No paper selected</span>
+          </div>
+          <div id="questions" class="questions"><p class="muted">Process a past paper to see its questions here.</p></div>
+        </article>
+      </section>
+      <p id="message"></p>
+    </main>
+  </div>
+
+  <script>
+    let materialId = null;
+    let paperId = null;
+    const $ = (selector) => document.querySelector(selector);
+    const message = $("#message");
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+      }[char]));
+    }
+
+    async function request(url, options = {}) {
+      const response = await fetch(url, options);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Request failed");
+      return data;
+    }
+
+    function showMessage(text, error = false) {
+      message.textContent = text;
+      message.className = error ? "error" : "";
+    }
+
+    function statusBadge(status) {
+      const className = status === "done" ? "success" : status === "failed" ? "failed" : "pending";
+      return `<span class="badge ${className}">${escapeHtml(status)}</span>`;
+    }
+
+    function renderUnits(units) {
+      $("#unit-list").innerHTML = units.length
+        ? units.map((unit) => `<div class="unit"><span>${escapeHtml(unit.name)}</span><span class="badge">${unit.position ?? "-"}</span></div>`).join("")
+        : "<p class='muted'>No units found.</p>";
+    }
+
+    function renderQuestions(items) {
+      $("#question-count").textContent = `${items.length} questions`;
+      $("#questions").innerHTML = items.length ? items.map((question, index) => `
+        <article class="question">
+          <div class="question-top"><p class="question-text">${index + 1}. ${escapeHtml(question.question_text)}</p>${statusBadge(question.question_type || "unclassified")}</div>
+          <div class="unit-highlight">Unit: ${escapeHtml(question.unit_title || "Not matched")}</div>
+          <div class="meta">
+            <span class="badge">Material: ${escapeHtml(question.material_title || "Not matched")}</span>
+            <span class="badge">Confidence: ${question.classification_confidence ?? "N/A"}</span>
+          </div>
+          ${question.options?.length ? `<ul class="options">${question.options.map((option, i) => `<li><b>${String.fromCharCode(65 + i)}.</b>${escapeHtml(option)}</li>`).join("")}</ul>` : ""}
+        </article>
+      `).join("") : "<p class='muted'>No questions were extracted.</p>";
+    }
+
+    $("#material-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        const data = await request("/materials", { method: "POST", body: new FormData(event.target) });
+        materialId = data.id;
+        $("#split-button").disabled = false;
+        $("#material-result").innerHTML = `<strong>${escapeHtml(data.name)}</strong><br><span class="muted">Material #${data.id} uploaded. Process its TOC to create units.</span>`;
+        showMessage("Material uploaded.");
+      } catch (error) { showMessage(error.message, true); }
+    });
+
+    $("#split-button").addEventListener("click", async () => {
+      if (!materialId) return;
+      $("#split-button").disabled = true;
+      try {
+        const units = await request(`/materials/${materialId}/split`, { method: "POST" });
+        renderUnits(units);
+        $("#material-result").innerHTML += `<br><span class="badge success">${units.length} units created</span>`;
+        showMessage("Material processed successfully.");
+      } catch (error) { showMessage(error.message, true); }
+      finally { $("#split-button").disabled = false; }
+    });
+
+    $("#paper-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        const data = await request("/past-papers", { method: "POST", body: new FormData(event.target) });
+        paperId = data.id;
+        $("#process-button").disabled = false;
+        $("#paper-result").innerHTML = `<strong>${escapeHtml(data.title)}</strong><br><span class="muted">Paper #${data.id} uploaded.</span>`;
+        showMessage("Past paper uploaded.");
+      } catch (error) { showMessage(error.message, true); }
+    });
+
+    $("#process-button").addEventListener("click", async () => {
+      if (!paperId) return;
+      $("#process-button").disabled = true;
+      showMessage("Processing questions...");
+      try {
+        const result = await request(`/past-papers/${paperId}/process`, { method: "POST" });
+        const questions = await request(`/past-papers/${paperId}/questions`);
+        $("#paper-result").innerHTML = `${statusBadge(result.status)} <span class="muted">${result.questions_extracted} questions extracted</span>`;
+        renderQuestions(questions);
+        showMessage("Questions processed successfully.");
+      } catch (error) { showMessage(error.message, true); }
+      finally { $("#process-button").disabled = false; }
+    });
+  </script>
+</body>
+</html>
