@@ -25,6 +25,7 @@ class UnitResponse(UnitCreate):
     content: str | None = None
     source_material_id: int | None = None
     position: int | None = None
+    lesson_names: list[str] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 
@@ -50,6 +51,9 @@ class QuestionResponse(BaseModel):
     material_title: str | None = None
     classification_confidence: float | None = None
     classification_reason: str | None = None
+    lesson_title: str | None = None
+    lesson_classification_confidence: float | None = None
+    lesson_classification_reason: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

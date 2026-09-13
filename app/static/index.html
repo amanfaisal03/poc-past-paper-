@@ -16,6 +16,7 @@
       --green: #12805c;
       --orange: #b56b00;
       --red: #c33c4b;
+      --purple: #7048b8;
       --shadow: 0 16px 42px rgba(35, 55, 90, .08);
     }
     * { box-sizing: border-box; }
@@ -91,7 +92,14 @@
     .question-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
     .question-text { margin: 0 0 12px; white-space: pre-wrap; font-weight: 650; }
     .meta { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
-    .unit-highlight { margin: -4px 0 12px; color: var(--brand-dark); font-size: 17px; font-weight: 750; }
+    .classification-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: -3px 0 14px; }
+    .classification { min-width: 0; padding: 10px 12px; border: 1px solid #dce4f6; border-radius: 10px; background: #f8faff; }
+    .classification.lesson { border-color: #e5dcf7; background: #fbf9ff; }
+    .classification-label { display: block; margin-bottom: 2px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .classification-title { display: block; overflow: hidden; color: var(--brand-dark); font-size: 14px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+    .classification.lesson .classification-title { color: var(--purple); }
+    .classification-confidence { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .classification-reason { display: block; margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
     .options { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
     .options li { padding: 8px 10px; border-radius: 7px; background: #f4f6fb; color: #3e4e69; }
     .options b { margin-right: 6px; color: var(--brand); }
@@ -104,6 +112,7 @@
       .sidebar-note, .nav-label, .nav-item { display: none; }
       .grid { grid-template-columns: 1fr; }
       .card.full { grid-column: auto; }
+      .classification-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -117,7 +126,7 @@
       <p class="nav-label">Workspace</p>
       <div class="nav-item active">Content library</div>
       <div class="nav-item">Question bank</div>
-      <div class="sidebar-note">Upload a book, split its table of contents into units, then classify past-paper questions.</div>
+      <div class="sidebar-note">Upload a book, split its table of contents into units, then classify past-paper questions by unit and lesson.</div>
     </aside>
 
     <main>
@@ -145,7 +154,7 @@
 
         <article class="card">
           <div class="card-head">
-            <div class="head-copy"><span class="step">2</span><div><h2>Upload past paper</h2><p>Extract questions, options, types, units, and material titles.</p></div></div>
+            <div class="head-copy"><span class="step">2</span><div><h2>Upload past paper</h2><p>Extract questions, options, units, lessons, and material titles.</p></div></div>
           </div>
           <form id="paper-form">
             <div><label for="paper-title">Past-paper title</label><input id="paper-title" name="title" placeholder="e.g. Tawjihi 2026" required></div>
@@ -196,9 +205,23 @@
       return `<span class="badge ${className}">${escapeHtml(status)}</span>`;
     }
 
+    function confidence(value) {
+      return typeof value === "number" ? `${Math.round(value * 100)}% confidence` : "Confidence unavailable";
+    }
+
     function renderUnits(units) {
       $("#unit-list").innerHTML = units.length
-        ? units.map((unit) => `<div class="unit"><span>${escapeHtml(unit.name)}</span><span class="badge">${unit.position ?? "-"}</span></div>`).join("")
+        ? units.map((unit) => `
+          <div class="unit">
+            <div>
+              <span>${escapeHtml(unit.name)}</span>
+              ${unit.lesson_names?.length
+                ? `<div class="muted">${unit.lesson_names.length} lessons: ${unit.lesson_names.map(escapeHtml).join(", ")}</div>`
+                : `<div class="muted">No lessons found</div>`}
+            </div>
+            <span class="badge">${unit.position ?? "-"}</span>
+          </div>
+        `).join("")
         : "<p class='muted'>No units found.</p>";
     }
 
@@ -207,10 +230,21 @@
       $("#questions").innerHTML = items.length ? items.map((question, index) => `
         <article class="question">
           <div class="question-top"><p class="question-text">${index + 1}. ${escapeHtml(question.question_text)}</p>${statusBadge(question.question_type || "unclassified")}</div>
-          <div class="unit-highlight">Unit: ${escapeHtml(question.unit_title || "Not matched")}</div>
+          <div class="classification-grid">
+            <div class="classification">
+              <span class="classification-label">Unit</span>
+              <span class="classification-title" title="${escapeHtml(question.unit_title || "Not matched")}">${escapeHtml(question.unit_title || "Not matched")}</span>
+              <span class="classification-confidence">${confidence(question.classification_confidence)}</span>
+            </div>
+            <div class="classification lesson">
+              <span class="classification-label">Lesson</span>
+              <span class="classification-title" title="${escapeHtml(question.lesson_title || "Not matched")}">${escapeHtml(question.lesson_title || "Not matched")}</span>
+              <span class="classification-confidence">${confidence(question.lesson_classification_confidence)}</span>
+              <span class="classification-reason" title="${escapeHtml(question.lesson_classification_reason || "")}">${escapeHtml(question.lesson_classification_reason || "No lesson match reason")}</span>
+            </div>
+          </div>
           <div class="meta">
             <span class="badge">Material: ${escapeHtml(question.material_title || "Not matched")}</span>
-            <span class="badge">Confidence: ${question.classification_confidence ?? "N/A"}</span>
           </div>
           ${question.options?.length ? `<ul class="options">${question.options.map((option, i) => `<li><b>${String.fromCharCode(65 + i)}.</b>${escapeHtml(option)}</li>`).join("")}</ul>` : ""}
         </article>

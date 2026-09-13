@@ -78,5 +78,3 @@ def _split_questions(text: str) -> list[ExtractedQuestion]:
         )
 
     return questions
-
-

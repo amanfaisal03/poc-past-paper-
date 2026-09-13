@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app._question_extractor import PastPaperQuestion
-from app.classifier import match_question_to_unit
+from app.classifier import classify_question
 from app.models import PastPaper, Question, Unit
 
 
@@ -14,7 +14,7 @@ def save_past_paper_questions(
     db.query(Question).filter(Question.past_paper_id == paper.id).delete()
 
     for question in questions:
-        unit, confidence, reason = match_question_to_unit(question, units)
+        classification = classify_question(question, units)
         db.add(
             Question(
                 past_paper_id=paper.id,
@@ -23,9 +23,12 @@ def save_past_paper_questions(
                 options=question.options,
                 marks=question.marks,
                 section=question.section,
-                unit_id=unit.id if unit else None,
-                classification_confidence=confidence,
-                classification_reason=reason,
+                unit_id=classification.unit.id if classification.unit else None,
+                classification_confidence=classification.unit_confidence,
+                classification_reason=classification.unit_reason,
+                lesson_title=classification.lesson_title,
+                lesson_classification_confidence=classification.lesson_confidence,
+                lesson_classification_reason=classification.lesson_reason,
             )
         )
 

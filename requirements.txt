@@ -9,3 +9,4 @@ python-multipart
 sqlalchemy
 uvicorn[standard]
 llama_cloud==1.6.0
+psycopg==3.3.5

@@ -198,11 +198,13 @@ def split_material_into_units(material_id: int, db: DatabaseSession) -> list[Uni
                     source_material_id=material.id,
                     position=position,
                     content=extracted.unit_names,
+                    lesson_names=extracted.lessons_by_unit.get(name, []),
                 )
                 db.add(unit)
-            elif unit.source_material_id == material.id:
+            else:
                 unit.position = position
                 unit.content = extracted.unit_names
+                unit.lesson_names = extracted.lessons_by_unit.get(name, [])
             units.append(unit)
         db.commit()
         for unit in units:

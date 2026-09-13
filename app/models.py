@@ -56,6 +56,7 @@ class Unit(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True)
     description = Column(Text, default="", server_default="")
+    lesson_names = Column(JSONB, default=list, server_default="[]", nullable=False)
     material_object_name = Column(String(512), nullable=True)
     content = Column(Text, nullable=True)
     source_material_id = Column(ForeignKey("units.id"), nullable=True)
@@ -85,6 +86,9 @@ class Question(Base):
     unit_id = Column(ForeignKey("units.id"), nullable=True)
     classification_confidence = Column(Float, nullable=True)
     classification_reason = Column(Text, nullable=True)
+    lesson_title = Column(String(255), nullable=True)
+    lesson_classification_confidence = Column(Float, nullable=True)
+    lesson_classification_reason = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     past_paper = relationship("PastPaper", back_populates="questions")

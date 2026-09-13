@@ -7,7 +7,8 @@ from app._past_paper_repo import save_past_paper_questions
 from app._question_extractor import _to_past_paper_question
 from app.extractor import parse_past_paper
 from app.minio_service import get_file_bytes_from_minio
-from app.models import PastPaper, PastPaperContent, Unit
+from app.material_extractor import extract_toc_entries
+from app.models import MaterialContent, PastPaper, PastPaperContent, Unit
 
 
 def process_past_paper(db: Session, paper: PastPaper) -> int:
@@ -35,4 +36,17 @@ def process_past_paper(db: Session, paper: PastPaper) -> int:
         if unit.source_material_id is None
         or re.match(r"^\s*(?:unit|chapter|الوحدة|الفصل)\b", unit.name, re.IGNORECASE)
     ]
+    for unit in units:
+        if unit.lesson_names or unit.source_material_id is None:
+            continue
+        material_content = db.scalar(
+            select(MaterialContent).where(
+                MaterialContent.material_id == unit.source_material_id
+            )
+        )
+        if material_content is None:
+            continue
+        toc = extract_toc_entries(material_content.content)
+        unit.lesson_names = toc.lessons_by_unit.get(unit.name, [])
+
     return save_past_paper_questions(db, paper, questions, units)
